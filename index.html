@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Binary Calculator</title>
+
+<style>
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: linear-gradient(135deg, #080d1c, #172554);
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    color: white;
+}
+
+.container {
+    background: #111827;
+    width: 390px;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 0 30px rgba(0, 150, 255, 0.25);
+    border: 1px solid #1e293b;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 8px;
+    color: #38bdf8;
+}
+
+.subtitle {
+    text-align: center;
+    color: #94a3b8;
+    margin-bottom: 25px;
+    font-size: 14px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    color: #cbd5e1;
+    font-size: 14px;
+}
+
+input {
+    width: 100%;
+    padding: 13px;
+    margin-bottom: 18px;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    background: #1e293b;
+    color: #38bdf8;
+    font-family: 'Consolas', monospace;
+    font-size: 18px;
+    letter-spacing: 1px;
+    outline: none;
+    transition: 0.2s;
+}
+
+input:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+}
+
+.buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 22px;
+}
+
+button {
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    background: #2563eb;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    background: #38bdf8;
+    color: #080d1c;
+    transform: translateY(-2px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+.result-box {
+    background: #1e293b;
+    padding: 18px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #334155;
+}
+
+.result-box h3 {
+    color: #38bdf8;
+    margin-bottom: 10px;
+    font-size: 15px;
+}
+
+#result {
+    font-size: 24px;
+    font-family: 'Consolas', monospace;
+    font-weight: bold;
+    overflow-wrap: anywhere;
+    color: #4ade80;
+}
+
+#decimal-preview {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #94a3b8;
+    font-family: 'Consolas', monospace;
+}
+
+.clear {
+    width: 100%;
+    margin-top: 15px;
+    background: #dc2626;
+    font-size: 16px;
+}
+
+.clear:hover {
+    background: #ef4444;
+    color: white;
+}
+
+.footer {
+    text-align: center;
+    margin-top: 22px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Binary Calculator</h1>
+
+    <p class="subtitle">Binary Arithmetic System</p>
+
+    <label for="num1">First Binary Number</label>
+    <input type="text" id="num1" placeholder="Example: 1010" oninput="filterBinary(this)">
+
+    <label for="num2">Second Binary Number</label>
+    <input type="text" id="num2" placeholder="Example: 1100" oninput="filterBinary(this)">
+
+    <div class="buttons">
+        <button onclick="calculate('+')">+</button>
+        <button onclick="calculate('-')">-</button>
+        <button onclick="calculate('*')">×</button>
+        <button onclick="calculate('/')">÷</button>
+    </div>
+
+    <div class="result-box">
+        <h3>Binary Result</h3>
+        <div id="result">0</div>
+        <div id="decimal-preview">Decimal: 0</div>
+    </div>
+
+    <button class="clear" onclick="clearCalculator()">
+        Clear
+    </button>
+
+    <div class="footer" id="engine-status">
+        Powered By C++ & WebAssembly
+    </div>
+
+</div>
+
+<!-- محاولة تحميل ملف WebAssembly إن وجد -->
+<script src="calculator.js" onerror="console.log('Running built-in C++ logic fallback')"></script>
+
+<script>
+
+var cppCalculate = null;
+
+// تفعيل محرك WebAssembly إذا تم تحميل calculator.js بنجاح
+if (typeof Module !== 'undefined') {
+    Module.onRuntimeInitialized = function() {
+        cppCalculate = Module.cwrap(
+            'calculate',
+            'string',
+            ['string', 'string', 'number']
+        );
+        document.getElementById("engine-status").innerText = "Powered By C++ & WebAssembly (Active)";
+    };
+}
+
+// منع إدخال أي رموز غير 0 و 1 أثناء الكتابة
+function filterBinary(input) {
+    input.value = input.value.replace(/[^01]/g, '');
+}
+
+// دالة مطابقة لمنطق C++ في حال عدم وجود ملف calculator.js
+function fallbackCppLogic(bin1, bin2, opCode) {
+    const n1 = parseInt(bin1, 2);
+    const n2 = parseInt(bin2, 2);
+    const op = String.fromCharCode(opCode);
+    let res = 0;
+
+    if (op === '+') res = n1 + n2;
+    else if (op === '-') res = n1 - n2;
+    else if (op === '*') res = n1 * n2;
+    else if (op === '/') {
+        if (n2 === 0) return "Error: Div by 0";
+        res = Math.trunc(n1 / n2);
+    }
+
+    return (res < 0 ? "-" : "") + Math.abs(res).toString(2);
+}
+
+function calculate(operation) {
+
+    let num1 = document.getElementById("num1").value.trim();
+    let num2 = document.getElementById("num2").value.trim();
+    let output = document.getElementById("result");
+    let decPreview = document.getElementById("decimal-preview");
+
+    if (!num1 || !num2) {
+        output.style.color = "#f87171";
+        output.innerText = "Enter Both Numbers";
+        decPreview.innerText = "";
+        return;
+    }
+
+    if (!/^[01]+$/.test(num1) || !/^[01]+$/.test(num2)) {
+        output.style.color = "#f87171";
+        output.innerText = "Invalid Binary Number";
+        decPreview.innerText = "";
+        return;
+    }
+
+    // استخدام C++ Wasm إذا كان جاهزاً، وإلا استخدام المنطق البديل فوراً
+    let answer = cppCalculate
+        ? cppCalculate(num1, num2, operation.charCodeAt(0))
+        : fallbackCppLogic(num1, num2, operation.charCodeAt(0));
+
+    if (answer.startsWith("Error")) {
+        output.style.color = "#f87171";
+        output.innerText = answer;
+        decPreview.innerText = "";
+    } else {
+        output.style.color = "#4ade80";
+        output.innerText = answer;
+        let decVal = parseInt(answer, 2);
+        decPreview.innerText = `Decimal: ${decVal}`;
+    }
+}
+
+function clearCalculator() {
+    document.getElementById("num1").value = "";
+    document.getElementById("num2").value = "";
+    document.getElementById("result").style.color = "#4ade80";
+    document.getElementById("result").innerText = "0";
+    document.getElementById("decimal-preview").innerText = "Decimal: 0";
+}
+
+</script>
+
+</body>
+</html>
